@@ -9,6 +9,7 @@ from .views import (
     BeforeAfterCaseViewSet,
     OrderViewSet,
     HomePageAPIView,
+    DashboardStatsAPIView,
 )
 
 router = DefaultRouter()
@@ -23,5 +24,6 @@ router.register(r'orders', OrderViewSet, basename='order')
 
 urlpatterns = [
     path('home/', HomePageAPIView.as_view(), name='home-page-data'),
+    path('dashboard/stats/', DashboardStatsAPIView.as_view(), name='dashboard-stats'),
     path('', include(router.urls)),
 ]

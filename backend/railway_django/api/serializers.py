@@ -1,4 +1,7 @@
 from rest_framework import serializers
+from django.utils.text import slugify
+import uuid
+
 from .models import (
     ProductBundle,
     Review,
@@ -11,23 +14,25 @@ from .models import (
 )
 
 class ProductBundleSerializer(serializers.ModelSerializer):
-    # CamelCase aliases for frontend compatibility
-    priceUSD = serializers.FloatField(source='price_usd')
-    originalPriceUSD = serializers.FloatField(source='original_price_usd')
-    discountPercent = serializers.IntegerField(source='discount_percent')
-    bottlesCount = serializers.IntegerField(source='bottles_count')
-    supplyDays = serializers.CharField(source='supply_days')
-    bestValue = serializers.BooleanField(source='best_value')
-    freeGifts = serializers.JSONField(source='free_gifts')
-    reviewsCount = serializers.IntegerField(source='reviews_count')
-    inStock = serializers.BooleanField(source='in_stock')
-    stockLeft = serializers.IntegerField(source='stock_left')
-    id = serializers.CharField(source='slug')
+    # CamelCase aliases for frontend compatibility (marked read_only so writes use internal fields)
+    priceUSD = serializers.FloatField(source='price_usd', read_only=True)
+    originalPriceUSD = serializers.FloatField(source='original_price_usd', read_only=True)
+    discountPercent = serializers.IntegerField(source='discount_percent', read_only=True)
+    bottlesCount = serializers.IntegerField(source='bottles_count', read_only=True)
+    supplyDays = serializers.CharField(source='supply_days', read_only=True)
+    bestValue = serializers.BooleanField(source='best_value', read_only=True)
+    freeGifts = serializers.JSONField(source='free_gifts', read_only=True)
+    reviewsCount = serializers.IntegerField(source='reviews_count', read_only=True)
+    inStock = serializers.BooleanField(source='in_stock', read_only=True)
+    stockLeft = serializers.IntegerField(source='stock_left', read_only=True)
+    id = serializers.CharField(source='slug', read_only=True)
+    db_id = serializers.IntegerField(source='id', read_only=True)
 
     class Meta:
         model = ProductBundle
         fields = [
             'id',
+            'db_id',
             'slug',
             'name',
             'subtitle',
@@ -57,13 +62,41 @@ class ProductBundleSerializer(serializers.ModelSerializer):
             'stock_left',
             'stockLeft',
             'display_order',
+            'created_at',
         ]
+        read_only_fields = ['created_at']
+
+    def to_internal_value(self, data):
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        mapping = {
+            'priceUSD': 'price_usd',
+            'originalPriceUSD': 'original_price_usd',
+            'discountPercent': 'discount_percent',
+            'bottlesCount': 'bottles_count',
+            'supplyDays': 'supply_days',
+            'bestValue': 'best_value',
+            'freeGifts': 'free_gifts',
+            'reviewsCount': 'reviews_count',
+            'inStock': 'in_stock',
+            'stockLeft': 'stock_left',
+            'displayOrder': 'display_order',
+        }
+        for camel, snake in mapping.items():
+            if camel in data and snake not in data:
+                data[snake] = data[camel]
+
+        if not data.get('slug') and data.get('name'):
+            base_slug = slugify(data['name'])
+            data['slug'] = base_slug if base_slug else f"bundle-{uuid.uuid4().hex[:6]}"
+
+        return super().to_internal_value(data)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = '__all__'
+        read_only_fields = ['created_at']
 
 
 class FAQSerializer(serializers.ModelSerializer):
@@ -73,11 +106,21 @@ class FAQSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FAQ
-        fields = ['id', 'category', 'question', 'answer', 'q', 'a', 'display_order']
+        fields = ['id', 'category', 'question', 'answer', 'q', 'a', 'display_order', 'created_at']
+        read_only_fields = ['created_at']
+
+    def to_internal_value(self, data):
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        if 'q' in data and 'question' not in data:
+            data['question'] = data['q']
+        if 'a' in data and 'answer' not in data:
+            data['answer'] = data['a']
+        return super().to_internal_value(data)
 
 
 class BlogArticleSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(source='slug')
+    id = serializers.CharField(source='slug', read_only=True)
+    db_id = serializers.IntegerField(source='id', read_only=True)
     readTime = serializers.CharField(source='read_time', read_only=True)
     authorRole = serializers.CharField(source='author_role', read_only=True)
     authorAvatar = serializers.CharField(source='author_avatar', read_only=True)
@@ -88,6 +131,7 @@ class BlogArticleSerializer(serializers.ModelSerializer):
         model = BlogArticle
         fields = [
             'id',
+            'db_id',
             'slug',
             'title',
             'category',
@@ -106,7 +150,28 @@ class BlogArticleSerializer(serializers.ModelSerializer):
             'content',
             'recommended_bundle_id',
             'recommendedBundleId',
+            'created_at',
         ]
+        read_only_fields = ['created_at']
+
+    def to_internal_value(self, data):
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        mapping = {
+            'readTime': 'read_time',
+            'authorRole': 'author_role',
+            'authorAvatar': 'author_avatar',
+            'keyTakeaways': 'key_takeaways',
+            'recommendedBundleId': 'recommended_bundle_id',
+        }
+        for camel, snake in mapping.items():
+            if camel in data and snake not in data:
+                data[snake] = data[camel]
+
+        if not data.get('slug') and data.get('title'):
+            base_slug = slugify(data['title'])
+            data['slug'] = base_slug if base_slug else f"article-{uuid.uuid4().hex[:6]}"
+
+        return super().to_internal_value(data)
 
 
 class ActiveIngredientSerializer(serializers.ModelSerializer):
@@ -136,7 +201,21 @@ class BeforeAfterCaseSerializer(serializers.ModelSerializer):
             'afterImage',
             'bundle_used',
             'bundleUsed',
+            'display_order',
         ]
+
+    def to_internal_value(self, data):
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        mapping = {
+            'beforeImage': 'before_image',
+            'afterImage': 'after_image',
+            'bundleUsed': 'bundle_used',
+            'displayOrder': 'display_order',
+        }
+        for camel, snake in mapping.items():
+            if camel in data and snake not in data:
+                data[snake] = data[camel]
+        return super().to_internal_value(data)
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -169,6 +248,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'created_at',
             'items'
         ]
+        read_only_fields = ['created_at']
 
     def create(self, validated_data):
         request = self.context.get('request')
@@ -184,4 +264,3 @@ class OrderSerializer(serializers.ModelSerializer):
                 image=item.get('image', '')
             )
         return order
-
