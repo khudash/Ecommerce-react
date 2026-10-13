@@ -669,7 +669,7 @@ export default function DashboardPage({ onBackToStore, onDataUpdated }) {
                   </div>
                   <div>
                     <div className="text-2xl font-black text-slate-900">
-                      ${stats ? stats.total_revenue_usd.toFixed(2) : '0.00'}
+                      Rs. {stats ? Math.round(stats.total_revenue_usd * 278).toLocaleString() : '0'}
                     </div>
                     <div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-1">
                       <TrendingUp className="w-3 h-3" />
@@ -824,7 +824,7 @@ export default function DashboardPage({ onBackToStore, onDataUpdated }) {
                           </div>
                           <div className="text-right">
                             <div className="font-extrabold text-slate-900">
-                              ${order.total_usd}
+                              Rs. {Math.round(parseFloat(order.total_usd || 0) * 278).toLocaleString()}
                             </div>
                             <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full inline-block mt-0.5 ${
                               order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-800' :
@@ -873,7 +873,7 @@ export default function DashboardPage({ onBackToStore, onDataUpdated }) {
                               {bundle.name}
                             </div>
                             <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
-                              <span>${bundle.price_usd || bundle.priceUSD}</span>
+                              <span>Rs. {Math.round(parseFloat(bundle.price_usd || bundle.priceUSD || 0) * 278).toLocaleString()}</span>
                               <span className="text-slate-300">•</span>
                               <span className="text-emerald-700 font-semibold">{bundle.supply_days || bundle.supplyDays}</span>
                             </div>
@@ -958,10 +958,10 @@ export default function DashboardPage({ onBackToStore, onDataUpdated }) {
                               <div className="text-[11px] text-slate-500 font-normal truncate max-w-xs">{p.subtitle}</div>
                             </td>
                             <td className="py-3.5 px-4">
-                              <div className="font-extrabold text-slate-900">${price}</div>
+                              <div className="font-extrabold text-slate-900">Rs. {Math.round(parseFloat(price || 0) * 278).toLocaleString()}</div>
                               {origPrice && (
                                 <div className="text-[10px] text-slate-400 line-through">
-                                  ${origPrice} ({disc}% OFF)
+                                  Rs. {Math.round(parseFloat(origPrice || 0) * 278).toLocaleString()} ({disc}% OFF)
                                 </div>
                               )}
                             </td>
@@ -1107,7 +1107,7 @@ export default function DashboardPage({ onBackToStore, onDataUpdated }) {
                               <div className="text-[11px] text-slate-400 font-semibold">{order.city}</div>
                             </td>
                             <td className="py-3.5 px-4">
-                              <div className="font-extrabold text-slate-900">${order.total_usd}</div>
+                              <div className="font-extrabold text-slate-900">Rs. {Math.round(parseFloat(order.total_usd || 0) * 278).toLocaleString()}</div>
                               <span className="text-[10px] font-bold uppercase text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                                 {order.payment_method?.toUpperCase()}
                               </span>
@@ -2460,7 +2460,7 @@ function OrderViewModal({ isOpen, onClose, order, onStatusChange }) {
                 {order.items.map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-none">
                     <span className="font-medium text-slate-800">{item.product_name} (x{item.quantity})</span>
-                    <span className="font-bold text-slate-900">${item.price_usd}</span>
+                    <span className="font-bold text-slate-900">Rs. {Math.round(parseFloat(item.price_usd || 0) * 278).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
@@ -2469,7 +2469,7 @@ function OrderViewModal({ isOpen, onClose, order, onStatusChange }) {
             )}
             <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-200 font-black text-sm text-slate-900">
               <span>Total Amount</span>
-              <span className="text-emerald-800">${order.total_usd}</span>
+              <span className="text-emerald-800">Rs. {Math.round(parseFloat(order.total_usd || 0) * 278).toLocaleString()}</span>
             </div>
           </div>
 

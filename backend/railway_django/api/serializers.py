@@ -12,6 +12,7 @@ from .models import (
     Order,
     OrderItem
 )
+from .email_service import send_order_notification_email
 
 class ProductBundleSerializer(serializers.ModelSerializer):
     # CamelCase aliases for frontend compatibility (marked read_only so writes use internal fields)
@@ -263,4 +264,5 @@ class OrderSerializer(serializers.ModelSerializer):
                 price_usd=item.get('priceUSD', item.get('price_usd', 0.00)),
                 image=item.get('image', '')
             )
+        send_order_notification_email(order)
         return order

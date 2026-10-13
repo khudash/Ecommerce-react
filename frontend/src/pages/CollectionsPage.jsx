@@ -4,7 +4,6 @@ import {
   ShoppingBag, 
   Gift, 
   ShieldCheck, 
-  Zap, 
   Star,
   Check,
   Filter
@@ -177,14 +176,6 @@ export default function CollectionsPage({ currency, onAddToCart, onBuyNow, openQ
                 >
                   <ShoppingBag className="w-3.5 h-3.5" />
                   <span>Add to Cart • {formatPrice(bundle.priceUSD)}</span>
-                </button>
-
-                <button
-                  onClick={() => onBuyNow(bundle)}
-                  className="w-full py-2 px-4 rounded-xl font-bold text-xs text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <Zap className="w-3.5 h-3.5 text-amber-600" />
-                  <span>1-Click Buy Now</span>
                 </button>
               </div>
 

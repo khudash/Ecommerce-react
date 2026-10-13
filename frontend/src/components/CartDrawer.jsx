@@ -24,12 +24,15 @@ export default function CartDrawer({
   if (!isOpen) return null;
 
   const formatPrice = (usd) => {
-    const curr = CURRENCIES[currency];
-    const amount = (usd * curr.rate).toFixed(curr.rate > 10 ? 0 : 2);
+    const curr = CURRENCIES[currency] || CURRENCIES['PKR'];
+    const val = parseFloat(usd) || 0;
+    const amount = (val * curr.rate).toFixed(curr.rate > 10 ? 0 : 2);
     return `${curr.symbol}${amount}`;
   };
 
-  const subtotalUSD = cart.reduce((sum, item) => sum + (item.priceUSD * item.quantity), 0);
+  const getItemPrice = (item) => parseFloat(item.priceUSD || item.price_usd || 0);
+
+  const subtotalUSD = cart.reduce((sum, item) => sum + (getItemPrice(item) * item.quantity), 0);
   const finalTotalUSD = subtotalUSD;
 
   const freeShippingThreshold = 50;
@@ -77,7 +80,7 @@ export default function CartDrawer({
               <span className="text-slate-500 text-[11px]">{progressPercent}%</span>
             </div>
             <div className="w-full h-1.5 sm:h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-emerald-600 transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
@@ -119,7 +122,7 @@ export default function CartDrawer({
                       {item.name}
                     </h5>
                     <div className="text-[11px] text-emerald-700 font-bold mt-0.5">
-                      {formatPrice(item.priceUSD)} each
+                      {formatPrice(getItemPrice(item))} each
                     </div>
 
                     {/* Quantity modifier */}
@@ -153,7 +156,7 @@ export default function CartDrawer({
 
                   <div className="text-right shrink-0">
                     <span className="text-xs sm:text-sm font-extrabold text-slate-900">
-                      {formatPrice(item.priceUSD * item.quantity)}
+                      {formatPrice(getItemPrice(item) * item.quantity)}
                     </span>
                   </div>
                 </div>

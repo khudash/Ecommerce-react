@@ -11,7 +11,6 @@ import FaqSection from './components/FaqSection';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import HairQuizModal from './components/HairQuizModal';
-import CheckoutModal from './components/CheckoutModal';
 import CheckoutPage from './pages/CheckoutPage';
 import SearchModal from './components/SearchModal';
 import PolicyModal from './components/PolicyModal';
@@ -111,15 +110,9 @@ export default function App() {
 
   // Global Store State
   const [currency, setCurrency] = useState('PKR');
-  const [cart, setCart] = useState([
-    {
-      ...PRODUCTS[2],
-      quantity: 1
-    }
-  ]);
+  const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [cartNotification, setCartNotification] = useState(null);
@@ -403,10 +396,7 @@ export default function App() {
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         currency={currency}
-        onProceedToCheckout={() => {
-          setIsCartOpen(false);
-          setIsCheckoutOpen(true);
-        }}
+        onProceedToCheckout={handleProceedToCheckout}
       />
 
       {/* Hair Growth Assessment Quiz Modal */}

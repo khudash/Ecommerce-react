@@ -51,7 +51,6 @@ export default function Navbar({
   ];
 
   const mobileExtraNavItems = [
-    { key: 'dashboard', label: '👑 CUSTOM DASHBOARD (ADMIN)', onClick: () => handleNav('dashboard') },
     { key: 'blogs', label: 'CLINICAL JOURNAL & BLOGS', onClick: () => handleNav('blogs') },
     { key: 'faq', label: 'FAQS & HELP CENTER', onClick: () => handleNav('faq') },
     { key: 'terms', label: 'TERMS & CONDITIONS', onClick: () => handleNav('terms') },
@@ -176,18 +175,8 @@ export default function Navbar({
             })}
           </nav>
 
-          {/* Action Buttons (Search, Dashboard & Cart) */}
+          {/* Action Buttons (Search & Cart) */}
           <div className="flex items-center space-x-1.5 sm:space-x-2.5">
-            {/* Custom Admin Dashboard Shortcut */}
-            <button
-              onClick={() => handleNav('dashboard')}
-              className="hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 border border-emerald-200/90 text-xs font-bold transition-all cursor-pointer shadow-xs"
-              title="Open Custom Dynamic Dashboard (/dashboard)"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Dashboard</span>
-            </button>
-
             {/* Quick Search */}
             <button
               onClick={openSearch}

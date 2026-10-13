@@ -25,6 +25,26 @@ import { CURRENCIES } from '../data/storeData';
 import { createOrder } from '../services/api';
 import confetti from 'canvas-confetti';
 
+const InputField = React.memo(function InputField({ label, id, icon: Icon, error, ...props }) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-xs font-bold text-slate-700 mb-1">{label}</label>
+      <div className="relative">
+        {Icon && (
+          <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+        )}
+        <input
+          id={id}
+          {...props}
+          className={`w-full ${Icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 rounded-xl bg-white border text-slate-900 text-xs focus:outline-none focus:ring-1 transition-all shadow-xs
+            ${error ? 'border-red-400 focus:border-red-400 focus:ring-red-200' : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-200'}`}
+        />
+      </div>
+      {error && <p className="text-[10px] text-red-500 mt-0.5">{error}</p>}
+    </div>
+  );
+});
+
 export default function CheckoutPage({
   cart,
   currency,
@@ -51,14 +71,19 @@ export default function CheckoutPage({
 
   const formatPrice = (usd) => {
     const curr = CURRENCIES[currency] || CURRENCIES['PKR'];
-    const amount = (usd * curr.rate).toFixed(curr.rate > 10 ? 0 : 2);
+    const val = parseFloat(usd) || 0;
+    const amount = (val * curr.rate).toFixed(curr.rate > 10 ? 0 : 2);
     return `${curr.symbol}${amount}`;
   };
 
-  const subtotalUSD = cart.reduce((sum, item) => sum + (item.priceUSD * item.quantity), 0);
+  const getItemPrice = (item) => parseFloat(item.priceUSD || item.price_usd || 0);
+  const getItemOriginalPrice = (item) => parseFloat(item.originalPriceUSD || item.original_price_usd || 0);
+
+  const subtotalUSD = cart.reduce((sum, item) => sum + (getItemPrice(item) * item.quantity), 0);
   const discountUSD = subtotalUSD * (promoDiscount / 100);
-  const shippingUSD = subtotalUSD >= 50 ? 0 : 5;
-  const finalTotalUSD = Math.max(0, subtotalUSD - discountUSD);
+  const SHIPPING_PKR = 200;                          // fixed Rs. 200 delivery charge
+  const shippingUSD = SHIPPING_PKR / 278;            // ≈ $0.72 USD
+  const finalTotalUSD = Math.max(0, subtotalUSD - discountUSD + shippingUSD);
   const totalItemsCount = cart.reduce((s, i) => s + i.quantity, 0);
 
   const validate = () => {
@@ -97,7 +122,7 @@ export default function CheckoutPage({
         id: item.id,
         name: item.name,
         quantity: item.quantity,
-        priceUSD: item.priceUSD,
+        priceUSD: getItemPrice(item),
         image: item.image || '',
       })),
     };
@@ -117,22 +142,19 @@ export default function CheckoutPage({
     }
   };
 
-  const InputField = ({ label, icon: Icon, error, ...props }) => (
-    <div>
-      <label className="block text-xs font-bold text-slate-700 mb-1">{label}</label>
-      <div className="relative">
-        {Icon && (
-          <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-        )}
-        <input
-          {...props}
-          className={`w-full ${Icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 rounded-xl bg-white border text-slate-900 text-xs focus:outline-none focus:ring-1 transition-all shadow-xs
-            ${error ? 'border-red-400 focus:border-red-400 focus:ring-red-200' : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-200'}`}
-        />
-      </div>
-      {error && <p className="text-[10px] text-red-500 mt-0.5">{error}</p>}
-    </div>
-  );
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
+      }));
+    }
+  };
 
   // ─── ORDER PLACED CONFIRMATION ───────────────────────────────────────
   if (isOrderPlaced && placedOrder) {
@@ -257,7 +279,7 @@ export default function CheckoutPage({
 
           {/* ─── LEFT COLUMN: ORDER FORM ─────────────────────────────── */}
           <div className="lg:col-span-7 space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6">
 
               {/* Section 1: Shipping */}
               <div className="rounded-3xl bg-white border border-slate-200 shadow-sm p-5 sm:p-6 space-y-4">
@@ -272,34 +294,40 @@ export default function CheckoutPage({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <InputField
                     label="Full Name *"
+                    id="fullName"
+                    name="fullName"
                     icon={User}
                     type="text"
                     required
                     placeholder="Ali Khan"
                     value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    onChange={handleChange}
                     error={errors.fullName}
                   />
                   <InputField
                     label="Phone Number (For Delivery Updates) *"
+                    id="phone"
+                    name="phone"
                     icon={Phone}
                     type="tel"
                     required
                     placeholder="0300-1234567"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={handleChange}
                     error={errors.phone}
                   />
                 </div>
 
                 <InputField
                   label="Complete Delivery Address *"
+                  id="address"
+                  name="address"
                   icon={Home}
                   type="text"
                   required
                   placeholder="House No. / Street / Area / Block..."
                   value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  onChange={handleChange}
                   error={errors.address}
                 />
 
@@ -307,43 +335,51 @@ export default function CheckoutPage({
                   <div className="sm:col-span-2">
                     <InputField
                       label="City *"
+                      id="city"
+                      name="city"
                       icon={Building2}
                       type="text"
                       required
                       placeholder="Lahore / Karachi / Islamabad"
                       value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      onChange={handleChange}
                       error={errors.city}
                     />
                   </div>
                   <InputField
                     label="Postal Code"
+                    id="postalCode"
+                    name="postalCode"
                     icon={Hash}
                     type="text"
                     placeholder="54000"
                     value={formData.postalCode}
-                    onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                    onChange={handleChange}
                   />
                 </div>
 
                 <InputField
                   label="Email Address (Optional)"
+                  id="email"
+                  name="email"
                   icon={Mail}
                   type="email"
                   placeholder="ali@example.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={handleChange}
                 />
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Order Notes (Optional)</label>
+                  <label htmlFor="notes" className="block text-xs font-bold text-slate-700 mb-1">Order Notes (Optional)</label>
                   <div className="relative">
                     <FileText className="absolute left-3.5 top-3 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
                     <textarea
+                      id="notes"
+                      name="notes"
                       rows={2}
                       placeholder="e.g. Leave at gate / specific instructions..."
                       value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      onChange={handleChange}
                       className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 shadow-xs transition-all resize-none"
                     />
                   </div>
@@ -361,6 +397,7 @@ export default function CheckoutPage({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
                   {/* COD */}
                   <label className={`p-4 rounded-2xl border-2 cursor-pointer flex items-start gap-3 transition-all ${
                     formData.paymentMethod === 'cod'
@@ -381,10 +418,66 @@ export default function CheckoutPage({
                         Cash on Delivery (COD)
                       </div>
                       <span className="text-[10px] text-slate-500 block mt-0.5">
-                        Pay cash when parcel arrives. No advance needed.
+                        Parcel milne par cash dein. Advance nahi chahiye.
                       </span>
                       <span className="inline-block mt-1.5 text-[9px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
                         RECOMMENDED
+                      </span>
+                    </div>
+                  </label>
+
+                  {/* EasyPaisa */}
+                  <label className={`p-4 rounded-2xl border-2 cursor-pointer flex items-start gap-3 transition-all ${
+                    formData.paymentMethod === 'easypaisa'
+                      ? 'bg-green-50 border-green-500 shadow-md shadow-green-100'
+                      : 'bg-white border-slate-200 hover:border-green-300'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="easypaisa"
+                      checked={formData.paymentMethod === 'easypaisa'}
+                      onChange={() => setFormData({ ...formData, paymentMethod: 'easypaisa' })}
+                      className="accent-green-600 mt-0.5"
+                    />
+                    <div>
+                      <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                        <span className="w-4 h-4 rounded-full bg-green-600 text-white text-[8px] font-black flex items-center justify-center shrink-0">EP</span>
+                        EasyPaisa
+                      </div>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">
+                        EasyPaisa account se online payment karein.
+                      </span>
+                      <span className="inline-block mt-1.5 text-[9px] font-bold text-green-800 bg-green-100 px-2 py-0.5 rounded-full">
+                        INSTANT TRANSFER
+                      </span>
+                    </div>
+                  </label>
+
+                  {/* JazzCash */}
+                  <label className={`p-4 rounded-2xl border-2 cursor-pointer flex items-start gap-3 transition-all ${
+                    formData.paymentMethod === 'jazzcash'
+                      ? 'bg-red-50 border-red-400 shadow-md shadow-red-100'
+                      : 'bg-white border-slate-200 hover:border-red-300'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="jazzcash"
+                      checked={formData.paymentMethod === 'jazzcash'}
+                      onChange={() => setFormData({ ...formData, paymentMethod: 'jazzcash' })}
+                      className="accent-red-500 mt-0.5"
+                    />
+                    <div>
+                      <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                        <span className="w-4 h-4 rounded-full bg-red-500 text-white text-[8px] font-black flex items-center justify-center shrink-0">JC</span>
+                        JazzCash
+                      </div>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">
+                        JazzCash mobile wallet se secure payment karein.
+                      </span>
+                      <span className="inline-block mt-1.5 text-[9px] font-bold text-red-800 bg-red-100 px-2 py-0.5 rounded-full">
+                        INSTANT TRANSFER
                       </span>
                     </div>
                   </label>
@@ -406,13 +499,17 @@ export default function CheckoutPage({
                     <div>
                       <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
                         <CreditCard className="w-4 h-4 text-amber-600 shrink-0" />
-                        Card / EasyPaisa / JazzCash
+                        Debit / Credit Card
                       </div>
                       <span className="text-[10px] text-slate-500 block mt-0.5">
-                        Instant secure online transfer. Encrypted payment.
+                        Visa, Mastercard ya koi bhi debit/credit card.
+                      </span>
+                      <span className="inline-block mt-1.5 text-[9px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
+                        SECURE ENCRYPTED
                       </span>
                     </div>
                   </label>
+
                 </div>
               </div>
 
@@ -496,11 +593,13 @@ export default function CheckoutPage({
 
                         {/* Price */}
                         <div className="flex items-center justify-between mt-2">
-                          <span className="text-[10px] text-slate-400 line-through">
-                            {formatPrice((item.originalPriceUSD || item.original_price_usd) * item.quantity)}
-                          </span>
-                          <span className="text-sm font-extrabold text-emerald-800">
-                            {formatPrice((item.priceUSD || item.price_usd) * item.quantity)}
+                          {getItemOriginalPrice(item) > 0 && (
+                            <span className="text-[10px] text-slate-400 line-through">
+                              {formatPrice(getItemOriginalPrice(item) * item.quantity)}
+                            </span>
+                          )}
+                          <span className="text-sm font-extrabold text-emerald-800 ml-auto">
+                            {formatPrice(getItemPrice(item) * item.quantity)}
                           </span>
                         </div>
                       </div>
@@ -541,9 +640,7 @@ export default function CheckoutPage({
                 )}
                 <div className="flex justify-between text-slate-600">
                   <span>Shipping</span>
-                  <span className={`font-bold ${shippingUSD === 0 ? 'text-emerald-700' : ''}`}>
-                    {shippingUSD === 0 ? 'FREE 🎉' : formatPrice(shippingUSD)}
-                  </span>
+                  <span className="font-bold text-slate-800">Rs. 200</span>
                 </div>
                 <div className="flex justify-between text-base font-extrabold text-slate-900 pt-2 border-t border-slate-200">
                   <span>Total Payable</span>
@@ -601,11 +698,12 @@ export default function CheckoutPage({
             </div>
 
             {/* Desktop Place Order Button */}
-            <form onSubmit={handleSubmit}>
+            <div className="hidden lg:block">
               <button
                 type="submit"
+                form="checkout-form"
                 disabled={isProcessing || cart.length === 0}
-                className="hidden lg:flex w-full py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 hover:brightness-105 text-slate-950 font-extrabold text-sm shadow-xl shadow-amber-300/30 items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 hover:brightness-105 text-slate-950 font-extrabold text-sm shadow-xl shadow-amber-300/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
               >
                 {isProcessing ? (
                   <>
@@ -620,11 +718,11 @@ export default function CheckoutPage({
                   </>
                 )}
               </button>
-              <p className="hidden lg:block text-center text-[10px] text-slate-400 mt-2">
+              <p className="text-center text-[10px] text-slate-400 mt-2">
                 <ShieldCheck className="w-3 h-3 inline mr-1 text-emerald-600" />
                 60-Day Guarantee • COD Available • Orders saved to our database
               </p>
-            </form>
+            </div>
 
           </div>
           {/* end right column */}

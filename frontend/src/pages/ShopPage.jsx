@@ -4,7 +4,6 @@ import {
   Sparkles, 
   Gift, 
   ShieldCheck, 
-  Zap, 
   Clock, 
   Flame, 
   Star, 
@@ -214,17 +213,6 @@ export default function ShopPage({ currency, onAddToCart, onBuyNow, openQuiz }) 
                   >
                     <ShoppingBag className="w-4 h-4" />
                     <span>Add to Cart • {formatPrice(bundle.priceUSD)}</span>
-                  </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onBuyNow(bundle);
-                    }}
-                    className="w-full py-2.5 px-4 rounded-xl font-bold text-xs text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <Zap className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Express Checkout (1-Click)</span>
                   </button>
 
                   <div className="text-center text-[11px] text-slate-500 pt-1 flex items-center justify-center gap-1">

@@ -5,7 +5,6 @@ import {
   ShoppingBag, 
   Gift, 
   ShieldCheck, 
-  Zap, 
   Clock, 
   Flame, 
   ArrowRight
@@ -170,17 +169,6 @@ export default function ProductBundles({
                   >
                     <ShoppingBag className="w-3.5 h-3.5" />
                     <span>Add to Cart • {formatPrice(bundle.priceUSD)}</span>
-                  </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onBuyNow(bundle);
-                    }}
-                    className="w-full py-2 px-3 rounded-xl font-bold text-[11px] text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                  >
-                    <Zap className="w-3 h-3 text-amber-600" />
-                    <span>Express Checkout (1-Click)</span>
                   </button>
 
                   <div className="text-center text-[10px] text-slate-500 pt-0.5 flex items-center justify-center gap-1">

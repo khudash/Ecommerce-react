@@ -38,12 +38,15 @@ export default function CheckoutModal({
   if (!isOpen) return null;
 
   const formatPrice = (usd) => {
-    const curr = CURRENCIES[currency];
-    const amount = (usd * curr.rate).toFixed(curr.rate > 10 ? 0 : 2);
+    const curr = CURRENCIES[currency] || CURRENCIES['PKR'];
+    const val = parseFloat(usd) || 0;
+    const amount = (val * curr.rate).toFixed(curr.rate > 10 ? 0 : 2);
     return `${curr.symbol}${amount}`;
   };
 
-  const subtotalUSD = cart.reduce((sum, item) => sum + (item.priceUSD * item.quantity), 0);
+  const getItemPrice = (item) => parseFloat(item.priceUSD || item.price_usd || 0);
+
+  const subtotalUSD = cart.reduce((sum, item) => sum + (getItemPrice(item) * item.quantity), 0);
   const discountUSD = subtotalUSD * (promoDiscount / 100);
   const finalTotalUSD = Math.max(0, subtotalUSD - discountUSD);
 
@@ -145,7 +148,7 @@ export default function CheckoutModal({
                   {orderSummary.items.map((it) => (
                     <div key={it.id} className="flex items-center justify-between text-xs text-slate-700">
                       <span>{it.name} (x{it.quantity})</span>
-                      <span className="font-bold text-slate-900">{formatPrice(it.priceUSD * it.quantity)}</span>
+                      <span className="font-bold text-slate-900">{formatPrice(getItemPrice(it) * it.quantity)}</span>
                     </div>
                   ))}
                 </div>
